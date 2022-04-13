@@ -131,6 +131,6 @@ class ApiProducts {
   }
 }
 
-const api = new ApiProducts();
+const apiProducts = new ApiProducts();
 
-module.exports = api;
+module.exports = apiProducts;
