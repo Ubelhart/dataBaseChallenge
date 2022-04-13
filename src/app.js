@@ -5,10 +5,7 @@ const server = express();
 const httpServer = new HttpServer(server);
 const io = new IOServer(httpServer);
 const api = require("./script");
-let products;
-api.getDataBaseProducts().then((db) => {
-  products = db;
-});
+
 const { options } = require("../options/mariaDB.js");
 const knex = require("knex")(options);
 
@@ -17,6 +14,8 @@ async function createIfNotExist() {
     await knex.schema.createTable("messages", (table) => {
       table.string("email");
       table.string("text");
+      table.string("date");
+      table.increments("id");
     });
     console.log("Table messages created");
   } catch (err) {
@@ -34,39 +33,43 @@ async function getDataBaseMessages() {
     .then((messages) => {
       db = messages;
     })
-    .catch((err) => {
-      console.log(err);
+    .catch(async (err) => {
+      console.log(err.sqlMessage);
     });
   return db;
 }
 
 io.on("connection", async (socket) => {
   console.log("Un cliente se ha conectado");
+  const messages = await getDataBaseMessages();
+  const products = await api.getDataBaseProducts();
 
   socket.emit("products", products);
-  socket.on("new-products", (product) => {
+  socket.on("new-products", async (product) => {
     product.price = parseInt(product.price);
 
-    if (!products.length) {
-      product.id = 1;
-    } else {
-      product.id = products.at(-1).id + 1;
-    }
-    products.push(product);
+    knex("products")
+      .insert(product)
+      .then(() => {
+        console.log("Producto insertado");
+      });
+    const products = await api.getDataBaseProducts();
     io.sockets.emit("products", products);
   });
-  const messages = await getDataBaseMessages();
 
   socket.emit("messages", messages);
-  socket.on("new-message", async (data) => {
+  socket.on("new-message", async (message) => {
+    message.date = new Date().toLocaleString();
+
     knex("messages")
-      .insert(data)
+      .insert(message)
       .then(() => {
         console.log("Message inserted");
       })
       .catch((err) => {
         console.log(err);
       });
+    const messages = await getDataBaseMessages();
     io.sockets.emit("messages", messages);
   });
 });

@@ -9,7 +9,7 @@ class ApiProducts {
     router.use(json());
     router.use(urlencoded({ extended: true }));
 
-    this.createIfNotExist();
+    this.createIfNotExist;
     this.showProducts();
     this.showProduct();
     this.router = router;

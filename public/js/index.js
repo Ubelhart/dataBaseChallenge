@@ -36,7 +36,7 @@ function renderMessage(messages) {
     .map((elem) => {
       return `<div>
         <strong class="email">${elem.email}</strong>
-        <em class="date">[${new Date(Date.now())}]</em>:
+        <em class="date">[${elem.date}]</em>:
         <em class="text">${elem.text}</em> </div>`;
     })
     .join(" ");
